@@ -22,9 +22,7 @@ import com.arjuna.mw.wst11.UserTransactionFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.quickstarts.wsat.simple.jaxws.RestaurantServiceAT;
-import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
@@ -41,8 +39,9 @@ import jakarta.inject.Inject;
 @RunWith(Arquillian.class)
 public class ClientIT {
 
+    public UserTransaction ut;
     private static final String ManifestMF = "Manifest-Version: 1.0\n"
-        + "Dependencies: org.jboss.xts,org.jboss.modules,org.jboss.msc\n";
+        + "Dependencies: org.jboss.xts,org.jboss.jts\n";
 
     @Inject
     @ClientStub
@@ -58,8 +57,8 @@ public class ClientIT {
 
         return ShrinkWrap.create(WebArchive.class, "wsat-simple.war")
             .addPackages(true, RestaurantServiceATImpl.class.getPackage()).addAsResource("context-handlers.xml")
-            .addAsWebInfResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
-            .setManifest(new StringAsset(ManifestMF));
+            .addAsWebInfResource(new StringAsset("<beans bean-discovery-mode=\"all\"></beans>"), "beans.xml")
+            .addAsManifestResource(new StringAsset("Dependencies: org.jboss.xts,org.jboss.jts\n"), "MANIFEST.MF");
     }
 
     /**
@@ -73,7 +72,7 @@ public class ClientIT {
         System.out
             .println("\n\nStarting 'testCommit'. This test invokes a WS within an AT. The AT is later committed, which causes the back-end resource(s) to be committed.");
         System.out.println("[CLIENT] Creating a new WS-AT User Transaction");
-        UserTransaction ut = UserTransactionFactory.userTransaction();
+        ut = UserTransactionFactory.userTransaction();
         try {
             System.out
                 .println("[CLIENT] Beginning Atomic Transaction (All calls to Web services that support WS-AT wil be included in this transaction)");
